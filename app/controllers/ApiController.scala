@@ -15,13 +15,23 @@ import collection.Seq
 
 @Singleton
 class ApiController @Inject() (ec: ExecutionContext, ws: WSClient, val controllerComponents: ControllerComponents) extends BaseController {
-  implicit val charFormat = Format.of[String].inmap[Char](_.head, _.toString)
-  implicit val cardJson = Json.format[Card]
-  implicit val handJson = Json.format[Hand]
+  implicit val charFormat: Format[Char] = Format.of[String].inmap[Char](_.head, _.toString)
+  implicit val cardJson: OFormat[Card] = Json.format[Card]
+  implicit val handWrites: Writes[Hand] = (hand: Hand) => Json.obj(
+    "cards" -> hand.cards,
+    "hasStraight" -> hand.straight,
+    "hasFlush" -> hand.flush,
+    "highCard" -> hand.highCard,
+    "hasFullHouse" -> hand.fullHouse,
+    "pairs" -> hand.pairs,
+    "triples" -> hand.triples,
+    "quads" -> hand.quads
+  )
+
   def returnData(): Action[AnyContent] = Action {
     NoContent
   }
-  def returnCards(numCards: Int) = Action {
+  def returnCards(numCards: Int): Action[AnyContent] = Action {
     if (numCards < 1 || numCards > 52) {
       NoContent
     }
@@ -42,7 +52,7 @@ class ApiController @Inject() (ec: ExecutionContext, ws: WSClient, val controlle
     }
   }
 
-  def get(url: String, connectTimeout: Int = 5000, readTimeout: Int = 5000) = {
+  def get(url: String, connectTimeout: Int = 5000, readTimeout: Int = 5000): Seq[String] = {
     val request: WSRequest = ws.url(url).addHttpHeaders("Accept" -> "application/json").withRequestTimeout(5000.millis)
     val futureResponse : Future[Seq[String]] = request.get().map{ response => (response.json \\ "code").map(_.as[String])}(ec)
     val response = for {r <- Await.result(futureResponse, 3000.millis)} yield r
