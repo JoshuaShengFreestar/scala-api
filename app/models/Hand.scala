@@ -62,7 +62,6 @@ case class Hand(cards: Array[Card]) {
     var triple = 0
     var quad = 0
     for (i <- 1 until cards.length) {
-      println(s"${sortedVals(i)} ${count}")
       if (sortedVals(i) == sortedVals(i-1)) count += 1 else count = 1
       count match {
         case 2 => double += 1

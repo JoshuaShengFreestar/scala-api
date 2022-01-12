@@ -1,6 +1,9 @@
 package controllers
 
 import models.{Card, Hand}
+import org.mongodb.scala._
+import org.mongodb.scala.bson._
+import org.mongodb.scala.bson.Document
 import play.api.libs.functional.syntax.toInvariantFunctorOps
 import play.api.libs.json._
 import play.api.mvc.{Action, AnyContent, BaseController, ControllerComponents}
@@ -8,9 +11,10 @@ import play.api.mvc.{Action, AnyContent, BaseController, ControllerComponents}
 import javax.inject.{Inject, Singleton}
 import play.api.libs.ws._
 
+import scala.collection.Seq
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.concurrent.duration._
-import collection.Seq
+import tour.Helpers._
 
 
 @Singleton
@@ -48,14 +52,27 @@ class ApiController @Inject() (ec: ExecutionContext, ws: WSClient, val controlle
         }
         Card(i.charAt(1), value)
       }
+      mongoLog("GET", numCards.toString, Json.toJson(Hand(cards.toArray)))
       Ok(Json.toJson(Hand(cards.toArray)))
     }
   }
 
-  def get(url: String, connectTimeout: Int = 5000, readTimeout: Int = 5000): Seq[String] = {
+  private def get(url: String, connectTimeout: Int = 5000, readTimeout: Int = 5000): Seq[String] = {
     val request: WSRequest = ws.url(url).addHttpHeaders("Accept" -> "application/json").withRequestTimeout(5000.millis)
     val futureResponse : Future[Seq[String]] = request.get().map{ response => (response.json \\ "code").map(_.as[String])}(ec)
     val response = for {r <- Await.result(futureResponse, 3000.millis)} yield r
     response
+  }
+
+  private def mongoLog(connType: String, param: String, resp: JsValue): Unit = {
+    val respBson = resp.toString
+    val uri: String = "mongodb+srv://admin:admin@cluster0.1op9b.mongodb.net/logs?retryWrites=true&w=majority"
+    System.setProperty("org.mongodb.async.type", "netty")
+    val client: MongoClient = MongoClient(uri)
+    val db: MongoDatabase = client.getDatabase("logs")
+    val coll: MongoCollection[Document] = db.getCollection("scalaapi")
+    val document = BsonDocument("req" -> BsonString(connType), "param" -> BsonString(param), "response" -> BsonDocument(json=respBson))
+    println(document.toString)
+    coll.insertOne(document).printResults()
   }
 }
