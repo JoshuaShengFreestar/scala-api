@@ -6,6 +6,26 @@ to the card game poker and return the json object. It will also write a log to a
 It was built with the Scala Play framework and the deck of cards api
 at https://www.deckofcardsapi.com, as well as the MongoDB Scala Driver.
 
+### How to use:
+
+This API is designed to generate and interpret a hand of n cards according
+the rules of Poker. For those unfamiliar with poker, a poker hand consists of 5
+cards, with some hands containing special patterns being stronger than others.
+
+For the purpose of this API, only a couple hands are relevant:
+
+- High Card: A hand with no other special patterns, the highest card is compared.
+- Pair/Triple(Set)/Quads: A hand with 2/3/4 of the same value of card.
+- Straight: A hand with 5 cards in consecutive order (eg. Ace, 2, 3, 4, 5)
+- Flush: A hand with 5 cards, all of the same suit.
+- Full house: A hand with a triple and a pair
+
+The API then generates an object with the hand and fields for each of the poker hand types.
+For the special pattern fields (Straight, Flush, and Full house), The API iterates through the set of n cards and detects if a hand of 5 cards with
+the special pattern listed above is present and adds it as an attribute. For the
+Pairs/Triples/Quads field, it counts the number of Pairs/Triples/Quads, allowing each card to be used only once.
+For the high card field, it outputs the highest card in the hand.
+
 ### Installation:
 - Clone this git repo into a folder.
 - Navigate inside the folder with this repo and run the command `sbt run` in the terminal
