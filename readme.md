@@ -27,3 +27,8 @@ Response:
 
 ### Testing: 
 Tests are run using SBT, and are located in the test folder. To run all unit tests, execute the command`sbt test` .
+
+To get the last log sent MongoDB, execute `./getMongoRecords.sh`
+The output log will have the request type, parameter, and output.  
+
+Note that you will need to have `mongosh` installed.
