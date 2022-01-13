@@ -39,7 +39,7 @@ class ApiController @Inject() (ec: ExecutionContext, ws: WSClient, val controlle
       NoContent
     }
     else {
-      val deckInfo = get(s"https://deckofcardsapi.com/api/deck/new/draw/?count=${numCards}")
+      val deckInfo : Seq[String] = get(s"https://deckofcardsapi.com/api/deck/new/draw/?count=${numCards}")
       val cards: Seq[Card] = for (i <- deckInfo) yield {
         val value : Int = i.charAt(0) match {
           case 'A' => 1
