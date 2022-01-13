@@ -73,7 +73,6 @@ class ApiController @Inject() (ec: ExecutionContext, ws: WSClient, val controlle
     val db: MongoDatabase = client.getDatabase("logs")
     val coll: MongoCollection[Document] = db.getCollection("scalaapi")
     val document = BsonDocument("req" -> BsonString(connType), "param" -> BsonString(param), "response" -> BsonDocument(json=respBson))
-    println(document.toString)
     coll.insertOne(document).printResults()
   }
 }

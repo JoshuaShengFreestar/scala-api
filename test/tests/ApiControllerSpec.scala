@@ -33,13 +33,12 @@ class ApiControllerSpec extends PlaySpec with Results {
     }
     "be invalid for numCards < 1 and numCards > 52" in {
       val controller = new ApiController(ec, ws, Helpers.stubControllerComponents())
-      val result: Future[Result] = controller.returnCards(0).apply(FakeRequest())
-      val bodyText: String       = contentAsString(result)
-      val result2: Future[Result] = controller.returnCards(0).apply(FakeRequest())
-      val bodyText2: String       = contentAsString(result2)
-      println(bodyText)
-      bodyText mustBe ""
-      bodyText2 mustBe ""
+      val resultLower: Future[Result] = controller.returnCards(0).apply(FakeRequest())
+      val bodyTextLower: String       = contentAsString(resultLower)
+      val resultUpper: Future[Result] = controller.returnCards(53).apply(FakeRequest())
+      val bodyTextUpper: String       = contentAsString(resultUpper)
+      bodyTextLower mustBe ""
+      bodyTextUpper mustBe ""
     }
   }
 }
