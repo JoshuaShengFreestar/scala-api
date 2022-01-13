@@ -19,6 +19,7 @@ import tour.Helpers._
 
 @Singleton
 class ApiController @Inject() (ec: ExecutionContext, ws: WSClient, val controllerComponents: ControllerComponents) extends BaseController {
+  //json formatting templates
   implicit val charFormat: Format[Char] = Format.of[String].inmap[Char](_.head, _.toString)
   implicit val cardJson: OFormat[Card] = Json.format[Card]
   implicit val handWrites: Writes[Hand] = (hand: Hand) => Json.obj(
@@ -32,9 +33,7 @@ class ApiController @Inject() (ec: ExecutionContext, ws: WSClient, val controlle
     "quads" -> hand.quads
   )
 
-  def returnData(): Action[AnyContent] = Action {
-    NoContent
-  }
+  //main function called by api
   def returnCards(numCards: Int): Action[AnyContent] = Action {
     if (numCards < 1 || numCards > 52) {
       NoContent
@@ -57,6 +56,7 @@ class ApiController @Inject() (ec: ExecutionContext, ws: WSClient, val controlle
     }
   }
 
+    //makes api call
   private def get(url: String, connectTimeout: Int = 5000, readTimeout: Int = 5000): Seq[String] = {
     val request: WSRequest = ws.url(url).addHttpHeaders("Accept" -> "application/json").withRequestTimeout(5000.millis)
     val futureResponse : Future[Seq[String]] = request.get().map{ response => (response.json \\ "code").map(_.as[String])}(ec)
@@ -64,6 +64,7 @@ class ApiController @Inject() (ec: ExecutionContext, ws: WSClient, val controlle
     response
   }
 
+  //logs to mongodb
   private def mongoLog(connType: String, param: String, resp: JsValue): Unit = {
     val respBson = resp.toString
     val uri: String = "mongodb+srv://admin:admin@cluster0.1op9b.mongodb.net/logs?retryWrites=true&w=majority"
