@@ -35,22 +35,12 @@ class ApiController @Inject() (ec: ExecutionContext, ws: WSClient, val controlle
 
   //main function called by api
   def returnCards(numCards: Int): Action[AnyContent] = Action {
-    if (numCards < 1 || numCards > 52) {
+    if (!validateRequest(numCards)) {
       NoContent
     }
     else {
       val deckInfo : Seq[String] = get(s"https://deckofcardsapi.com/api/deck/new/draw/?count=${numCards}")
-      val cards: Seq[Card] = for (i <- deckInfo) yield {
-        val value : Int = i.charAt(0) match {
-          case 'A' => 1
-          case 'J' => 11
-          case 'Q' => 12
-          case 'K' => 13
-          case '0' => 10
-          case default => default.asDigit
-        }
-        Card(i.charAt(1), value)
-      }
+      val cards = parseApiData(deckInfo)
       mongoLog("GET", numCards.toString, Json.toJson(Hand(cards.toArray)))
       Ok(Json.toJson(Hand(cards.toArray)))
     }
@@ -65,7 +55,7 @@ class ApiController @Inject() (ec: ExecutionContext, ws: WSClient, val controlle
   }
 
   //logs to mongodb
-  private def mongoLog(connType: String, param: String, resp: JsValue): Unit = {
+  private def mongoLog(connType: String, param: String, resp: JsValue): Unit = Future {
     val respBson = resp.toString
     val uri: String = "mongodb+srv://admin:admin@cluster0.1op9b.mongodb.net/logs?retryWrites=true&w=majority"
     System.setProperty("org.mongodb.async.type", "netty")
@@ -74,5 +64,24 @@ class ApiController @Inject() (ec: ExecutionContext, ws: WSClient, val controlle
     val coll: MongoCollection[Document] = db.getCollection("scalaapi")
     val document = BsonDocument("req" -> BsonString(connType), "param" -> BsonString(param), "response" -> BsonDocument(json=respBson))
     coll.insertOne(document).printResults()
+  }(ec)
+
+  private def validateRequest(numCards: Int): Boolean = {
+    if (numCards < 1 || numCards > 52) false else true
+  }
+
+  private def parseApiData(rawDeckInfo: Seq[String]) = {
+    val cards: Seq[Card] = for (i <- rawDeckInfo) yield {
+      val value : Int = i.charAt(0) match {
+        case 'A' => 1
+        case 'J' => 11
+        case 'Q' => 12
+        case 'K' => 13
+        case '0' => 10
+        case default => default.asDigit
+      }
+      Card(i.charAt(1), value)
+    }
+    cards
   }
 }
